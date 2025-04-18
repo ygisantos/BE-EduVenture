@@ -57,13 +57,15 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         try {
-            // Removes token
-            $request->user()->currentAccessToken()->delete();
             if (!$request->user()) {
                 return response()->json([
                     'message' => 'No bearer token provided or token is invalid.'
                 ], 401);
             }
+
+            // Removes token
+            $request->user()->currentAccessToken()->delete();
+
             return response()->json([
                 'message' => 'Logout successful'
             ], 200);
@@ -80,17 +82,23 @@ class AuthController extends Controller
     {
         try {
             $user = $request->user();
-
             if (!$user) {
                 return response()->json([
                     'message' => 'No authenticated user found'
                 ], 401);
             }
 
-            return response()->json([
-                'user' => $user
-            ], 200);
+            // Get only necessary user information
+            $userData = [
+                'id' => $user->id,
+                'email' => $user->email,
+                'user_role' => $user->user_role,
+                'status' => $user->status
+            ];
 
+            return response()->json([
+                'user' => $userData
+            ], 200);
         } catch (Exception $e) {
             return response()->json([
                 'message' => 'Failed to retrieve user information',
