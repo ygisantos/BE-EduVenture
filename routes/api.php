@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\BookController;
+use App\Http\Controllers\API\ActivityLogsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -27,5 +28,11 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/contents/create/{bookId}', [BookController::class, 'storeContent']);
         Route::put('/contents/update', [BookController::class, 'updateContent']);
         Route::delete('/contents/delete/{contentId}', [BookController::class, 'destroyContent']);
+    });
+
+    // Activity Logs Routes
+    Route::prefix('activity-logs')->group(function () {
+        Route::post('/create', [ActivityLogsController::class, 'createLog']);
+        Route::get('/get', [ActivityLogsController::class, 'getLogs']);
     });
 });
