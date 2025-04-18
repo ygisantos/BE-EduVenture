@@ -11,7 +11,7 @@ use App\Http\Controllers\Controller;
 
 class AuthController extends Controller
 {
-    public function Login(Request $request) {
+    public function login(Request $request) {
 
         try {
             $validator = ValidationHelper::validate($request, [
