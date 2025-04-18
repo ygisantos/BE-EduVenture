@@ -57,18 +57,28 @@ class AuthController extends Controller
     public function logout(Request $request)
     {
         try {
-            if (!$request->user()) {
+            $user = $request->user();
+
+            if (!$user) {
                 return response()->json([
                     'message' => 'No bearer token provided or token is invalid.'
                 ], 401);
             }
 
-            // Removes token
-            $request->user()->currentAccessToken()->delete();
+            $token = $user->currentAccessToken();
+
+            if ($token) {
+                $token->delete();
+            } else {
+                return response()->json([
+                    'message' => 'Token not found or already invalidated.'
+                ], 401);
+            }
 
             return response()->json([
                 'message' => 'Logout successful'
             ], 200);
+
         } catch (Exception $e) {
             return response()->json([
                 'message' => 'Something went wrong.',
@@ -76,6 +86,7 @@ class AuthController extends Controller
             ], 500);
         }
     }
+
 
     // Get the current logged user
     public function getCurrentUser(Request $request)
