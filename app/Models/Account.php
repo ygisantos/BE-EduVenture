@@ -4,9 +4,11 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Laravel\Sanctum\HasApiTokens;
 
 class Account extends Model
 {
+    use HasApiTokens;
     protected $fillable = [
         'email',
         'password',
@@ -16,7 +18,9 @@ class Account extends Model
         'user_role',
         'status'
     ];
-
+    protected $hidden = [
+        'password'
+    ];
     public function books(): HasMany
     {
         return $this->hasMany(Book::class);
