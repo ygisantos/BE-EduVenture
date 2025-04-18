@@ -56,35 +56,3 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/history/{minigameId}/{studentId?}', [MinigameController::class, 'getHistory']);
     });
 });
-
-// EXAMPLES
-
-// minigame content create
-/*
-{
-  "contents": [
-    {
-      "question": "What is 5 + 7?",
-      "correct_answer": 2,
-      "option_1": "10",
-      "option_2": "12",
-      "option_3": "13",
-      "option_4": "15",
-      "points": 100,
-      "timer": 30
-    },
-    {
-      "question": "Which planet is known as the Red Planet?",
-      "correct_answer": 3,
-      "option_1": "Earth",
-      "option_2": "Venus",
-      "option_3": "Mars",
-      "option_4": "Jupiter",
-      "points": 100,
-      "timer": 30
-    }
-  ]
-}
-
-
-*/
