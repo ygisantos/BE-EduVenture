@@ -210,7 +210,7 @@ class AuthController extends Controller
                 'email' => 'required|email|unique:accounts,email',
                 'password' => 'required|min:6|confirmed',
                 'first_name' => 'required|string',
-                'middle_name' => 'nullable|string',
+                'middle_name' => $request->middle_name ?? '',
                 'last_name' => 'required|string',
                 'user_role' => 'required|in:teacher,admin,student', // customize roles as needed
                 'status' => 'required|in:active,inactive'

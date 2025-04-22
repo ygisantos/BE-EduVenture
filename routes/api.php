@@ -9,11 +9,11 @@ use Illuminate\Support\Facades\Route;
 
 Route::prefix('auth')->group(function() {
     Route::post('login', [AuthController::class, 'login']);
+    Route::post('register', [AuthController::class, 'createAccount']);
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('logout', [AuthController::class, 'logout']);
         Route::get('get', [AuthController::class, 'getCurrentUser']);
-        Route::post('register', [AuthController::class, 'createAccount']);
         Route::post('change-password', [AuthController::class, 'changePassword']);
         Route::put('update-information', [AuthController::class, 'updateInformation']);
         Route::put('change-status/{id}', [AuthController::class, 'changeStatus']);
