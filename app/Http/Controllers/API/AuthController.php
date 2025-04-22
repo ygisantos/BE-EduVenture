@@ -117,4 +117,128 @@ class AuthController extends Controller
             ], 500);
         }
     }
+
+    public function changePassword(Request $request)
+    {
+        try {
+            $validator = ValidationHelper::validate($request, [
+                'current_password' => 'required',
+                'new_password' => 'required|min:6',
+            ]);
+
+            if ($validator) return $validator;
+
+            $user = $request->user();
+
+            if (!Hash::check($request->current_password, $user->password)) {
+                return response()->json(['message' => 'Current password is incorrect.'], 401);
+            }
+
+            $user->password = Hash::make($request->new_password);
+            $user->save();
+
+            return response()->json(['message' => 'Password changed successfully.'], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while changing the password.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateInformation(Request $request)
+    {
+        try {
+            $validator = ValidationHelper::validate($request, [
+                'first_name' => 'required|string',
+                'middle_name' => 'nullable|string',
+                'last_name' => 'required|string',
+            ]);
+
+            if ($validator) return $validator;
+
+            $user = $request->user();
+
+            $user->first_name = $request->first_name;
+            $user->middle_name = $request->middle_name;
+            $user->last_name = $request->last_name;
+            $user->save();
+
+            return response()->json(['message' => 'User information updated successfully.'], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while updating user information.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function changeStatus(Request $request, $id)
+    {
+        try {
+            $validator = ValidationHelper::validate($request, [
+                'status' => 'required|in:active,inactive',
+            ]);
+
+            if ($validator) return $validator;
+
+            $user = Account::find($id);
+
+            if (!$user) {
+                return response()->json(['message' => 'User not found.'], 404);
+            }
+
+            $user->status = $request->status;
+            $user->save();
+
+            return response()->json(['message' => 'User status updated successfully.'], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while changing status.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function createAccount(Request $request)
+    {
+        try {
+            $validator = ValidationHelper::validate($request, [
+                'email' => 'required|email|unique:accounts,email',
+                'password' => 'required|min:6|confirmed',
+                'first_name' => 'required|string',
+                'middle_name' => 'nullable|string',
+                'last_name' => 'required|string',
+                'user_role' => 'required|in:teacher,admin,student', // customize roles as needed
+                'status' => 'required|in:active,inactive'
+            ]);
+
+            if ($validator) return $validator;
+
+            $account = Account::create([
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'first_name' => $request->first_name,
+                'middle_name' => $request->middle_name,
+                'last_name' => $request->last_name,
+                'user_role' => $request->user_role,
+                'status' => $request->status
+            ]);
+
+            return response()->json([
+                'message' => 'Account created successfully',
+                'account_id' => $account->id
+            ], 201);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while creating the account.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
 }
