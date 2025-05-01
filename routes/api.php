@@ -20,6 +20,8 @@ Route::prefix('auth')->group(function() {
     });
 });
 
+Route::get('accounts/get', [AuthController::class, 'getAllAccounts'])->middleware('auth:sanctum');
+
 Route::middleware('auth:sanctum')->group(function () {
     // Book Routes
     Route::prefix('books')->group(function () {

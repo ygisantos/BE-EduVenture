@@ -210,7 +210,6 @@ class AuthController extends Controller
                 'email' => 'required|email|unique:accounts,email',
                 'password' => 'required|min:6|confirmed',
                 'first_name' => 'required|string',
-                'middle_name' => $request->middle_name ?? '',
                 'last_name' => 'required|string',
                 'user_role' => 'required|in:teacher,admin,student', // customize roles as needed
                 'status' => 'required|in:active,inactive'
@@ -222,7 +221,7 @@ class AuthController extends Controller
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
                 'first_name' => $request->first_name,
-                'middle_name' => $request->middle_name,
+                'middle_name' => $request->middle_name ?? '',
                 'last_name' => $request->last_name,
                 'user_role' => $request->user_role,
                 'status' => $request->status
@@ -236,6 +235,48 @@ class AuthController extends Controller
         } catch (Exception $e) {
             return response()->json([
                 'message' => 'An error occurred while creating the account.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function getAllAccounts(Request $request)
+    {
+        try {
+            $query = Account::query();
+
+            if ($request->has('search') && $request->search) {
+                $search = $request->search;
+                $query->where(function ($q) use ($search) {
+                    $q->where('first_name', 'like', "%$search%")
+                      ->orWhere('middle_name', 'like', "%$search%")
+                      ->orWhere('last_name', 'like', "%$search%");
+                });
+            }
+
+            // Optional filter by status
+            if ($request->has('status') && $request->status) {
+                $query->where('status', $request->status);
+            }
+
+            // Optional filter by user_role
+            if ($request->has('user_role') && $request->user_role) {
+                $query->where('user_role', $request->user_role);
+            }
+
+            // Sort by name (first_name, middle_name, last_name)
+            $query->orderBy('first_name')
+                  ->orderBy('middle_name')
+                  ->orderBy('last_name');
+
+            // Paginate results
+            $accounts = $query->paginate(10);
+
+            return response()->json($accounts, 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while retrieving accounts.',
                 'error' => $e->getMessage()
             ], 500);
         }
