@@ -99,16 +99,8 @@ class AuthController extends Controller
                 ], 401);
             }
 
-            // Get only necessary user information
-            $userData = [
-                'id' => $user->id,
-                'email' => $user->email,
-                'user_role' => $user->user_role,
-                'status' => $user->status
-            ];
-
             return response()->json([
-                'user' => $userData
+                'user' => $user
             ], 200);
         } catch (Exception $e) {
             return response()->json([
