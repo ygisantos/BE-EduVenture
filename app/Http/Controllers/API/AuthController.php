@@ -258,6 +258,11 @@ class AuthController extends Controller
                 $query->where('user_role', $request->user_role);
             }
 
+            // Optional exclusion of user_role
+            if ($request->has('exclude_user_role') && $request->exclude_user_role) {
+                $query->where('user_role', '!=', $request->exclude_user_role);
+            }
+
             // Sort by name (first_name, middle_name, last_name)
             $query->orderBy('first_name')
                   ->orderBy('middle_name')
