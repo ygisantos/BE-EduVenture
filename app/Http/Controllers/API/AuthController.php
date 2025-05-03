@@ -153,13 +153,49 @@ class AuthController extends Controller
                 'first_name' => 'required|string',
                 'middle_name' => 'nullable|string',
                 'last_name' => 'required|string',
-                'email' => 'required|email|unique:accounts,email,' . $request->user()->email,
+                'email' => 'required|email|unique:accounts,email,' . $request->user()->id,
                 'user_role' => 'required|in:teacher,admin,student',
             ]);
 
             if ($validator) return $validator;
 
             $user = $request->user();
+
+            $user->first_name = $request->first_name;
+            $user->middle_name = $request->middle_name ?? '';
+            $user->last_name = $request->last_name;
+            $user->email = $request->email;
+            $user->user_role = $request->user_role;
+            $user->save();
+
+            return response()->json(['message' => 'User information updated successfully.'], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while updating user information.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function updateInformationById(Request $request, $id)
+    {
+        try {
+            $validator = ValidationHelper::validate($request, [
+                'first_name' => 'required|string',
+                'middle_name' => 'nullable|string',
+                'last_name' => 'required|string',
+                'email' => 'required|email|unique:accounts,email,' . $id,
+                'user_role' => 'required|in:teacher,admin,student',
+            ]);
+
+            if ($validator) return $validator;
+
+            $user = Account::find($id);
+
+            if (!$user) {
+                return response()->json(['message' => 'User not found.'], 404);
+            }
 
             $user->first_name = $request->first_name;
             $user->middle_name = $request->middle_name ?? '';

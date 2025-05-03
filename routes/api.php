@@ -19,6 +19,7 @@ Route::prefix('auth')->group(function() {
         Route::put('change-status/{id}', [AuthController::class, 'changeStatus']);
         Route::delete('delete/{id}', [AuthController::class, 'softDeleteAccount']);
         Route::patch('restore/{id}', [AuthController::class, 'restoreAccount']);
+        Route::put('update-information/{id}', [AuthController::class, 'updateInformationById']);
     });
 });
 
