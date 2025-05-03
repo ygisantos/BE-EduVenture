@@ -3,6 +3,7 @@
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
+use phpDocumentor\Reflection\Types\Nullable;
 
 return new class extends Migration
 {
@@ -20,6 +21,7 @@ return new class extends Migration
             $table->string('last_name');
             $table->string('user_role'); // admin, teacher, student
             $table->string('status')->default('active'); // active, inactive
+            $table->dateTime('deleted_at')->nullable()->default(null);
             $table->timestamps();
         });
     }

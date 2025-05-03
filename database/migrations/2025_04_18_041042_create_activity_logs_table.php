@@ -22,6 +22,7 @@ return new class extends Migration
                   ->onUpdate('cascade');
 
             $table->string('description');
+            $table->string('module');
             $table->timestamps();
         });
     }
