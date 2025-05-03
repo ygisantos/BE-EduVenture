@@ -313,6 +313,11 @@ class AuthController extends Controller
                 $query->where('user_role', '!=', $request->exclude_user_role);
             }
 
+            // Exclude the current account
+            if ($request->user()) {
+                $query->where('id', '!=', $request->user()->id);
+            }
+
             // Sort by name (first_name, middle_name, last_name)
             $query->orderBy('first_name')
                   ->orderBy('middle_name')
