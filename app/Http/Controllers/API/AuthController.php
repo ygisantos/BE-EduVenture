@@ -153,7 +153,7 @@ class AuthController extends Controller
                 'first_name' => 'required|string',
                 'middle_name' => 'nullable|string',
                 'last_name' => 'required|string',
-                'email' => 'required|email|unique:accounts,email,' . $request->user()->id,
+                'email' => 'required|email|unique:accounts,email,' . $request->user()->email,
                 'user_role' => 'required|in:teacher,admin,student',
             ]);
 
@@ -247,6 +247,11 @@ class AuthController extends Controller
     {
         try {
             $query = Account::query();
+
+            if($request->has('is_deleted')) {
+                if($request->is_deleted === "false") $query->whereNull('deleted_at');
+                else $query->whereNotNull('deleted_at');
+            }
 
             if ($request->has('search') && $request->search) {
                 $search = $request->search;
