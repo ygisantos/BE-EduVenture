@@ -26,6 +26,13 @@ class AuthController extends Controller
             $user = Account::where('email', $request->email)->first();
             if (!$user) return response()->json(['message' => 'The email address you entered is not associated with any account.'], 404);
 
+            // Check if the account is soft-deleted
+            if ($user->deleted_at !== null) {
+                return response()->json([
+                    'message' => 'This account has been deleted. Please contact the administrator for assistance.'
+                ], 403);
+            }
+
             // Attempts Login
             if (!Hash::check($request->password, $user->password))
                 return response()->json(['message' => 'The provided credentials are incorrect.'], 401);
@@ -278,6 +285,54 @@ class AuthController extends Controller
         } catch (Exception $e) {
             return response()->json([
                 'message' => 'An error occurred while retrieving accounts.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function softDeleteAccount(Request $request, $id)
+    {
+        try {
+            $user = Account::find($id);
+
+            if (!$user) {
+                return response()->json(['message' => 'User not found.'], 404);
+            }
+
+            $user->deleted_at = now();
+            $user->save();
+
+            return response()->json(['message' => 'Account deactivated successfully.'], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while deactivating the account.',
+                'error' => $e->getMessage()
+            ], 500);
+        }
+    }
+
+    public function restoreAccount(Request $request, $id)
+    {
+        try {
+            $user = Account::find($id);
+
+            if (!$user) {
+                return response()->json(['message' => 'User not found.'], 404);
+            }
+
+            if ($user->deleted_at === null) {
+                return response()->json(['message' => 'Account is not deleted.'], 400);
+            }
+
+            $user->deleted_at = null;
+            $user->save();
+
+            return response()->json(['message' => 'Account restored successfully.'], 200);
+
+        } catch (Exception $e) {
+            return response()->json([
+                'message' => 'An error occurred while restoring the account.',
                 'error' => $e->getMessage()
             ], 500);
         }

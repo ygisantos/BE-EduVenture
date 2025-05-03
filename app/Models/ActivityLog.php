@@ -9,7 +9,8 @@ class ActivityLog extends Model
 {
     protected $fillable = [
         'account_id',
-        'description'
+        'description',
+        'module'
     ];
 
     public function account(): BelongsTo

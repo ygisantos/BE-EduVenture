@@ -13,6 +13,7 @@ class ActivityLogsController extends Controller
     {
         $rules = [
             'description' => 'required|string|max:255',
+            'module' => 'required|string|max:255',
         ];
 
         $validationError = ValidationHelper::validate($request, $rules);
@@ -21,7 +22,8 @@ class ActivityLogsController extends Controller
         try {
             $log = ActivityLog::create([
                 'account_id' => auth()->id(),
-                'description' => $request->description
+                'description' => $request->description,
+                'module' => $request->module
             ]);
             return response()->json(['message' => 'Activity log created successfully', 'data' => $log], 201);
         } catch (\Exception $e) {
