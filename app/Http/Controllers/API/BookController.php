@@ -75,7 +75,9 @@ class BookController extends Controller
 
     public function index(): JsonResponse
     {
-        $books = Book::with('account')->get();
+        $books = Book::with('account')
+            ->withCount('contents')
+            ->get();
         return response()->json(['data' => $books]);
     }
 
