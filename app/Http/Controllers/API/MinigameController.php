@@ -83,13 +83,16 @@ class MinigameController extends Controller
             'status' => 'nullable|in:upcoming,ongoing,completed',
             'search' => 'nullable|string',
             'per_page' => 'nullable|integer|min:1|max:100',
+            'account_id' => 'nullable|exists:accounts,id',
         ];
 
         $validationError = ValidationHelper::validate($request, $rules);
         if ($validationError) return $validationError;
 
         try {
-            $query = Minigame::with('account:id,first_name,last_name');
+            $query = Minigame::with('account:id,first_name,last_name')
+                             ->withCount('contents')
+                             ->withSum('contents', 'points');
 
             if ($request->has('status')) {
                 $now = now();
@@ -109,6 +112,10 @@ class MinigameController extends Controller
             if ($request->has('search')) {
                 $search = strtolower($request->search);
                 $query->where('title', 'LIKE', "%{$search}%");
+            }
+
+            if ($request->has('account_id')) {
+                $query->where('account_id', $request->account_id);
             }
 
             $perPage = $request->input('per_page', 30);
