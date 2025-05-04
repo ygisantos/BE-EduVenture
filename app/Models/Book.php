@@ -12,7 +12,8 @@ class Book extends Model
         'title',
         'description',
         'status',
-        'account_id'
+        'account_id',
+        'deleted_at'
     ];
 
     public function account(): BelongsTo

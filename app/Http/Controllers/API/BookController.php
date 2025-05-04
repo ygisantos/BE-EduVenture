@@ -18,6 +18,7 @@ class BookController extends Controller
         $validationError = ValidationHelper::validate($request, [
             'title' => 'required|string',
             'description' => 'required|string',
+            'status' => 'required'
         ]);
 
         if ($validationError) return $validationError;
@@ -26,6 +27,7 @@ class BookController extends Controller
             'title' => $request->title,
             'description' => $request->description,
             'account_id' => Auth::id(),
+            'status' => $request->status
         ]);
 
         return response()->json(['message' => 'Book has been successfully created', 'data' => $book], 201);
@@ -56,13 +58,9 @@ class BookController extends Controller
     {
         $book = Book::findOrFail($id);
 
-        if ($book->account_id !== Auth::id()) {
-            return response()->json(['message' => 'Access denied: Insufficient permissions'], 403);
-        }
+        $book->update(['deleted_at' => now()]);
 
-        $book->delete();
-
-        return response()->json(['message' => 'Book has been successfully deleted']);
+        return response()->json(['message' => 'Book has been successfully marked as deleted']);
     }
 
     public function show($id): JsonResponse
@@ -73,11 +71,27 @@ class BookController extends Controller
         return response()->json(['data' => $book]);
     }
 
-    public function index(): JsonResponse
+    public function index(Request $request): JsonResponse
     {
-        $books = Book::with('account')
+        $query = Book::with('account')
             ->withCount('contents')
-            ->get();
+            ->whereNull('deleted_at'); // Exclude soft-deleted records
+
+        if ($request->has('account_id')) {
+            $query->where('account_id', $request->account_id);
+        }
+
+        if ($request->has('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->has('search')) {
+            $search = $request->search;
+            $query->where('title', 'like', "%{$search}%");
+        }
+
+        $books = $query->orderBy('updated_at', 'desc')->paginate($request->get('per_page', 10));
+
         return response()->json(['data' => $books]);
     }
 
