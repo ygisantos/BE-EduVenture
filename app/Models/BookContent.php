@@ -9,7 +9,13 @@ class BookContent extends Model
 {
     protected $fillable = [
         'book_id',
-        'content'
+        'content',
+        'title',
+        'page_number'
+    ];
+
+    protected $casts = [
+        'content' => 'string', // Ensure content is treated as a string
     ];
 
     public function book(): BelongsTo

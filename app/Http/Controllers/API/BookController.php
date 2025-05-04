@@ -106,7 +106,9 @@ class BookController extends Controller
 
         $validationError = ValidationHelper::validate($request, [
             'contents' => 'required|array',
-            'contents.*' => 'required|string'
+            'contents.*.content' => 'required|string',
+            'contents.*.title' => 'nullable|string',
+            'contents.*.page_number' => 'required|string'
         ]);
 
         if ($validationError) return $validationError;
@@ -114,7 +116,9 @@ class BookController extends Controller
         $contents = collect($request->contents)->map(function($content) use ($bookId) {
             return BookContent::create([
                 'book_id' => $bookId,
-                'content' => $content
+                'content' => $content['content'],
+                'title' => $content['title'] ?? null,
+                'page_number' => $content['page_number']
             ]);
         });
 
@@ -129,7 +133,9 @@ class BookController extends Controller
         $validationError = ValidationHelper::validate($request, [
             'contents' => 'required|array',
             'contents.*.id' => 'required|exists:book_contents,id',
-            'contents.*.content' => 'required|string'
+            'contents.*.content' => 'required|string',
+            'contents.*.title' => 'nullable|string',
+            'contents.*.page_number' => 'required|string'
         ]);
 
         if ($validationError) return $validationError;
@@ -141,7 +147,11 @@ class BookController extends Controller
                 return ['error' => 'Unauthorized', 'content_id' => $contentData['id']];
             }
 
-            $content->update(['content' => $contentData['content']]);
+            $content->update([
+                'content' => $contentData['content'],
+                'title' => $contentData['title'] ?? null,
+                'page_number' => $contentData['page_number']
+            ]);
             return $content;
         });
 
@@ -163,11 +173,6 @@ class BookController extends Controller
     public function destroyContent($contentId): JsonResponse
     {
         $content = BookContent::findOrFail($contentId);
-
-        if ($content->book->account_id !== Auth::id()) {
-            return response()->json(['message' => 'Access denied: Insufficient permissions'], 403);
-        }
-
         $content->delete();
 
         return response()->json(['message' => 'Book content has been successfully deleted']);

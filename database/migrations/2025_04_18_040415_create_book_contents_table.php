@@ -19,7 +19,10 @@ return new class extends Migration
                   ->on('books')
                   ->onDelete('cascade')
                   ->onUpdate('cascade');
-            $table->string('content');
+
+            $table->text('title')->nullable()->default(null);
+            $table->longText('content'); // Change from text to longText
+            $table->string('page_number');
             $table->timestamps();
         });
     }
