@@ -16,6 +16,7 @@ class Account extends Authenticatable
         'first_name',
         'middle_name',
         'last_name',
+        'teacher_id',
         'user_role',
         'status',
         'deleted_at'
@@ -41,5 +42,10 @@ class Account extends Authenticatable
     public function activityLogs(): HasMany
     {
         return $this->hasMany(ActivityLog::class);
+    }
+
+    public function teacher()
+    {
+        return $this->belongsTo(Account::class, 'teacher_id');
     }
 }

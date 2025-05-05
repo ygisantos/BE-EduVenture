@@ -14,6 +14,14 @@ return new class extends Migration
     {
         Schema::create('accounts', function (Blueprint $table) {
             $table->id();
+
+            $table->unsignedBigInteger('teacher_id')->nullable()->default(null); // teacher account (sino teacher ng student)
+            $table->foreign('teacher_id')
+                  ->references('id')
+                  ->on('accounts')
+                  ->onDelete('cascade')
+                  ->onUpdate('cascade');
+
             $table->string('email')->unique();
             $table->string('password');
             $table->string('first_name');

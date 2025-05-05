@@ -50,7 +50,8 @@ class AuthController extends Controller
             return response()->json([
                 'message' => 'Login successful',
                 'type' => $user->user_role,
-                'token' => $token
+                'token' => $token,
+                'account' => $user
             ], 200);
 
         } catch(Exception $e) {
@@ -155,6 +156,7 @@ class AuthController extends Controller
                 'last_name' => 'required|string',
                 'email' => 'required|email|unique:accounts,email,' . $request->user()->id,
                 'user_role' => 'required|in:teacher,admin,student',
+                'teacher_id' => 'nullable|exists:accounts,id'
             ]);
 
             if ($validator) return $validator;
@@ -166,6 +168,7 @@ class AuthController extends Controller
             $user->last_name = $request->last_name;
             $user->email = $request->email;
             $user->user_role = $request->user_role;
+            $user->teacher_id = $request->teacher_id ?? null;
             $user->save();
 
             return response()->json(['message' => 'User information updated successfully.'], 200);
@@ -187,6 +190,7 @@ class AuthController extends Controller
                 'last_name' => 'required|string',
                 'email' => 'required|email|unique:accounts,email,' . $id,
                 'user_role' => 'required|in:teacher,admin,student',
+                'teacher_id' => 'nullable|exists:accounts,id'
             ]);
 
             if ($validator) return $validator;
@@ -202,6 +206,7 @@ class AuthController extends Controller
             $user->last_name = $request->last_name;
             $user->email = $request->email;
             $user->user_role = $request->user_role;
+            $user->teacher_id = $request->teacher_id ?? null;
             $user->save();
 
             return response()->json(['message' => 'User information updated successfully.'], 200);
@@ -251,7 +256,8 @@ class AuthController extends Controller
                 'first_name' => 'required|string',
                 'last_name' => 'required|string',
                 'user_role' => 'required|in:teacher,admin,student',
-                'status' => 'required|in:active,inactive'
+                'status' => 'required|in:active,inactive',
+                'teacher_id' => 'nullable|exists:accounts,id'
             ]);
 
             if ($validator) return $validator;
@@ -263,7 +269,8 @@ class AuthController extends Controller
                 'middle_name' => $request->middle_name ?? '',
                 'last_name' => $request->last_name,
                 'user_role' => $request->user_role,
-                'status' => $request->status
+                'status' => $request->status,
+                'teacher_id' => $request->teacher_id ?? null
             ]);
 
             return response()->json([
@@ -317,6 +324,15 @@ class AuthController extends Controller
             if ($request->user()) {
                 $query->where('id', '!=', $request->user()->id);
             }
+
+            if($request->has('teacher_id') && $request->teacher_id) {
+                $query->where('teacher_id', $request->teacher_id);
+            }
+
+            // Include teacher information if teacher_id is present
+            $query->with(['teacher' => function ($q) {
+                $q->select('id', 'first_name', 'middle_name', 'last_name', 'email');
+            }]);
 
             // Sort by name (first_name, middle_name, last_name)
             $query->orderBy('first_name')
