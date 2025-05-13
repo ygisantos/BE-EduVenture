@@ -24,6 +24,8 @@ return new class extends Migration
                   ->on('accounts')
                   ->onDelete('cascade')
                   ->onUpdate('cascade');
+
+            $table->dateTime('deleted_at')->nullable()->default(null);
             $table->timestamps();
         });
     }

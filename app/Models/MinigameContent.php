@@ -10,6 +10,7 @@ class MinigameContent extends Model
     protected $fillable = [
         'minigame_id',
         'question',
+        'page_number',
         'correct_answer',
         'option_1',
         'option_2',

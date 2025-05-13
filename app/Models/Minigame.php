@@ -13,7 +13,8 @@ class Minigame extends Model
         'default_timer',
         'default_points',
         'starts_at',
-        'account_id'
+        'account_id',
+        'deleted_at'
     ];
 
     protected $casts = [

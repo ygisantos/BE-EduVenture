@@ -7,6 +7,7 @@ use App\Http\Helper\ValidationHelper;
 use App\Models\Minigame;
 use App\Models\MinigameContent;
 use App\Models\MinigameHistory;
+use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
@@ -18,7 +19,7 @@ class MinigameController extends Controller
             'title' => 'required|string|max:255',
             'default_timer' => 'required|numeric|min:0',
             'default_points' => 'required|integer|min:0',
-            'starts_at' => 'required|date',
+            'starts_at' => 'required|date'
         ];
 
         $validationError = ValidationHelper::validate($request, $rules);
@@ -31,6 +32,7 @@ class MinigameController extends Controller
                 'default_timer' => $request->default_timer,
                 'default_points' => $request->default_points,
                 'starts_at' => $request->starts_at,
+                'deleted_at' => $request->null
             ]);
 
             return response()->json(['message' => 'Minigame created successfully', 'data' => $minigame], 201);
@@ -52,9 +54,7 @@ class MinigameController extends Controller
         if ($validationError) return $validationError;
 
         try {
-            $minigame = Minigame::where('id', $id)
-                               ->where('account_id', auth()->id())
-                               ->firstOrFail();
+            $minigame = Minigame::where('id', $id)->firstOrFail();
 
             $minigame->update($request->all());
             return response()->json(['message' => 'Minigame updated successfully', 'data' => $minigame]);
@@ -66,11 +66,10 @@ class MinigameController extends Controller
     public function destroy($id)
     {
         try {
-            $minigame = Minigame::where('id', $id)
-                               ->where('account_id', auth()->id())
-                               ->firstOrFail();
+            $minigame = Minigame::where('id', $id)->firstOrFail();
 
-            $minigame->delete();
+            $minigame->update(['deleted_at' => Carbon::now()]);
+
             return response()->json(['message' => 'Minigame deleted successfully']);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Error deleting minigame', 'error' => $e->getMessage()], 500);
@@ -90,7 +89,8 @@ class MinigameController extends Controller
         if ($validationError) return $validationError;
 
         try {
-            $query = Minigame::with('account:id,first_name,last_name')
+            $query = Minigame::whereNull('deleted_at')
+                             ->with('account:id,first_name,last_name')
                              ->withCount('contents')
                              ->withSum('contents', 'points');
 
@@ -144,6 +144,7 @@ class MinigameController extends Controller
         $rules = [
             'contents' => 'required|array',
             'contents.*.question' => 'required|string',
+            'contents.*.page_number' => 'required|integer|min:1',
             'contents.*.correct_answer' => 'required|integer|between:1,4',
             'contents.*.option_1' => 'required|string',
             'contents.*.option_2' => 'required|string',
@@ -157,14 +158,12 @@ class MinigameController extends Controller
         if ($validationError) return $validationError;
 
         try {
-            $minigame = Minigame::where('id', $minigameId)
-                               ->where('account_id', auth()->id())
+            $minigame = MinigameContent::where('id', $minigameId)
                                ->firstOrFail();
 
             $contents = collect($request->contents)->map(function ($content) use ($minigameId) {
                 return array_merge($content, [
                     'minigame_id' => $minigameId,
-                    'account_id' => auth()->id(),
                 ]);
             });
 
@@ -197,9 +196,9 @@ class MinigameController extends Controller
         try {
             foreach ($request->contents as $content) {
                 MinigameContent::where('id', $content['id'])
-                    ->where('account_id', auth()->id())
                     ->update([
                         'question' => $content['question'],
+                        'page_number' => $content['page_number'] ?? null,
                         'correct_answer' => $content['correct_answer'],
                         'option_1' => $content['option_1'],
                         'option_2' => $content['option_2'],
@@ -220,7 +219,6 @@ class MinigameController extends Controller
     {
         try {
             $content = MinigameContent::where('id', $contentId)
-                                    ->where('account_id', auth()->id())
                                     ->firstOrFail();
 
             $content->delete();
@@ -273,10 +271,14 @@ class MinigameController extends Controller
     {
         try {
             $query = MinigameHistory::with('account')
-                                  ->where('minigame_id', $minigameId);
+                                  ->with('minigame');
 
-            if ($studentId) {
-                $query->where('account_id', $studentId);
+            if ($minigameId > -1) $query->where('minigame_id', $minigameId);
+            if ($studentId > -1) {
+                $query->where('account_id', $studentId)
+                      ->orderBy('updated_at', 'desc');
+            } else {
+                $query->orderBy('total_score', 'desc');
             }
 
             $history = $query->get();

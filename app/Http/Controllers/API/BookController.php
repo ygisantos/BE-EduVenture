@@ -35,23 +35,23 @@ class BookController extends Controller
 
     public function update(Request $request, $id): JsonResponse
     {
-        $book = Book::findOrFail($id);
+        try {
+            $book = Book::findOrFail($id);
 
-        if ($book->account_id !== Auth::id()) {
-            return response()->json(['message' => 'Access denied: Insufficient permissions'], 403);
+            $validationError = ValidationHelper::validate($request, [
+                'title' => 'required|string',
+                'description' => 'required|string',
+                'status' => 'required|in:active,inactive',
+            ]);
+
+            if ($validationError) return $validationError;
+
+            $book->update($request->all());
+
+            return response()->json(['message' => 'Book has been successfully updated', 'data' => $book]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
         }
-
-        $validationError = ValidationHelper::validate($request, [
-            'title' => 'required|string',
-            'description' => 'required|string',
-            'status' => 'required|in:active,inactive',
-        ]);
-
-        if ($validationError) return $validationError;
-
-        $book->update($request->all());
-
-        return response()->json(['message' => 'Book has been successfully updated', 'data' => $book]);
     }
 
     public function destroy($id): JsonResponse
@@ -98,76 +98,67 @@ class BookController extends Controller
     // Content Functions
     public function storeContent(Request $request, $bookId): JsonResponse
     {
-        $book = Book::findOrFail($bookId);
+        try {
+            $book = Book::findOrFail($bookId);
 
-        if ($book->account_id !== Auth::id()) {
-            return response()->json(['message' => 'Access denied: Insufficient permissions'], 403);
-        }
-
-        $validationError = ValidationHelper::validate($request, [
-            'contents' => 'required|array',
-            'contents.*.content' => 'required|string',
-            'contents.*.title' => 'nullable|string',
-            'contents.*.page_number' => 'required|string'
-        ]);
-
-        if ($validationError) return $validationError;
-
-        $contents = collect($request->contents)->map(function($content) use ($bookId) {
-            return BookContent::create([
-                'book_id' => $bookId,
-                'content' => $content['content'],
-                'title' => $content['title'] ?? null,
-                'page_number' => $content['page_number']
+            $validationError = ValidationHelper::validate($request, [
+                'contents' => 'required|array',
+                'contents.*.content' => 'required|string',
+                'contents.*.title' => 'nullable|string',
+                'contents.*.page_number' => 'required|string'
             ]);
-        });
 
-        return response()->json([
-            'message' => 'Book contents have been successfully created',
-            'data' => $contents
-        ], 201);
+            if ($validationError) return $validationError;
+
+            $contents = collect($request->contents)->map(function($content) use ($bookId) {
+                return BookContent::create([
+                    'book_id' => $bookId,
+                    'content' => $content['content'],
+                    'title' => $content['title'] ?? null,
+                    'page_number' => $content['page_number']
+                ]);
+            });
+
+            return response()->json([
+                'message' => 'Book contents have been successfully created',
+                'data' => $contents
+            ], 201);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
+        }
     }
 
     public function updateContent(Request $request): JsonResponse
     {
-        $validationError = ValidationHelper::validate($request, [
-            'contents' => 'required|array',
-            'contents.*.id' => 'required|exists:book_contents,id',
-            'contents.*.content' => 'required|string',
-            'contents.*.title' => 'nullable|string',
-            'contents.*.page_number' => 'required|string'
-        ]);
-
-        if ($validationError) return $validationError;
-
-        $updatedContents = collect($request->contents)->map(function($contentData) {
-            $content = BookContent::findOrFail($contentData['id']);
-
-            if ($content->book->account_id !== Auth::id()) {
-                return ['error' => 'Unauthorized', 'content_id' => $contentData['id']];
-            }
-
-            $content->update([
-                'content' => $contentData['content'],
-                'title' => $contentData['title'] ?? null,
-                'page_number' => $contentData['page_number']
+        try {
+            $validationError = ValidationHelper::validate($request, [
+                'contents' => 'required|array',
+                'contents.*.id' => 'required|exists:book_contents,id',
+                'contents.*.content' => 'required|string',
+                'contents.*.title' => 'nullable|string',
+                'contents.*.page_number' => 'required|string'
             ]);
-            return $content;
-        });
 
-        $errors = $updatedContents->where('error', 'Unauthorized');
-        if ($errors->isNotEmpty()) {
+            if ($validationError) return $validationError;
+
+            $updatedContents = collect($request->contents)->map(function($contentData) {
+                $content = BookContent::findOrFail($contentData['id']);
+
+                $content->update([
+                    'content' => $contentData['content'],
+                    'title' => $contentData['title'] ?? null,
+                    'page_number' => $contentData['page_number']
+                ]);
+                return $content;
+            });
+
             return response()->json([
-                'message' => 'Operation partially completed: Some contents could not be updated due to insufficient permissions',
-                'errors' => $errors,
-                'updated' => $updatedContents->whereNotIn('error', ['Unauthorized'])
-            ], 403);
+                'message' => 'Book contents have been successfully updated',
+                'data' => $updatedContents
+            ]);
+        } catch (\Exception $e) {
+            return response()->json(['message' => 'An error occurred', 'error' => $e->getMessage()], 500);
         }
-
-        return response()->json([
-            'message' => 'Book contents have been successfully updated',
-            'data' => $updatedContents
-        ]);
     }
 
     public function destroyContent($contentId): JsonResponse

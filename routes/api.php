@@ -52,7 +52,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::post('/create', [MinigameController::class, 'store']);
         Route::get('/get/{id}', [MinigameController::class, 'show']);
         Route::put('/update/{id}', [MinigameController::class, 'update']);
-        Route::delete('/delete/{id}', [MinigameController::class, 'destroy']);
+        Route::put('/delete/{id}', [MinigameController::class, 'destroy']);
 
         // Minigame Content Routes
         Route::post('/contents/create/{minigameId}', [MinigameController::class, 'storeContent']);
@@ -62,6 +62,6 @@ Route::middleware('auth:sanctum')->group(function () {
 
         // Minigame History Routes
         Route::post('/history/create', [MinigameController::class, 'storeHistory']);
-        Route::get('/history/{minigameId}/{studentId?}', [MinigameController::class, 'getHistory']);
+        Route::get('/history/{minigameId}/{studentId}', [MinigameController::class, 'getHistory']);
     });
 });

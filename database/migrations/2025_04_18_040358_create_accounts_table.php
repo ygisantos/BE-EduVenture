@@ -25,7 +25,7 @@ return new class extends Migration
             $table->string('email')->unique();
             $table->string('password');
             $table->string('first_name');
-            $table->string('middle_name');
+            $table->string('middle_name')->nullable()->default(null);
             $table->string('last_name');
             $table->string('user_role'); // admin, teacher, student
             $table->string('status')->default('active'); // active, inactive

@@ -21,22 +21,16 @@ return new class extends Migration
                   ->onDelete('cascade')
                   ->onUpdate('cascade');
 
-                  $table->string('question');
-                  $table->integer('correct_answer'); // 1, 2, 3, or 4
-                  $table->string('option_1');
-                  $table->string('option_2');
-                  $table->string('option_3');
-                  $table->string('option_4');
+            $table->integer('page_number');
+            $table->string('question');
+            $table->integer('correct_answer'); // 1, 2, 3, or 4
+            $table->string('option_1');
+            $table->string('option_2');
+            $table->string('option_3');
+            $table->string('option_4');
 
             $table->integer('points')->default(0);
             $table->double('timer')->default(0);
-
-            $table->unsignedBigInteger('account_id'); // Who made it
-            $table->foreign('account_id')
-                  ->references('id')
-                  ->on('accounts')
-                  ->onDelete('cascade')
-                  ->onUpdate('cascade');
 
             $table->timestamps();
         });
