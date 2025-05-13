@@ -4,6 +4,7 @@ use App\Http\Controllers\API\AuthController;
 use App\Http\Controllers\API\BookController;
 use App\Http\Controllers\API\ActivityLogsController;
 use App\Http\Controllers\API\MinigameController;
+use App\Http\Controllers\API\AccountNumberController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -24,6 +25,7 @@ Route::prefix('auth')->group(function() {
 });
 
 Route::get('accounts/get', [AuthController::class, 'getAllAccounts'])->middleware('auth:sanctum');
+Route::get('accounts/generate-account-numbers', [AccountNumberController::class, 'generateAccountNumbersForExistingAccounts'])->middleware('auth:sanctum');
 
 Route::middleware('auth:sanctum')->group(function () {
     // Book Routes

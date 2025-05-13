@@ -24,6 +24,14 @@ class MinigameSeeder extends Seeder
         // If we don't have 20 students, we'll create additional ones
         $existingCount = $studentAccounts->count();
         if ($existingCount < 20) {
+            // Get the last account number to continue the sequence
+            $lastAccount = Account::orderBy('id', 'desc')->first();
+            $nextAccountNumber = 2000001; // Default starting number
+
+            if ($lastAccount && $lastAccount->account_number) {
+                $nextAccountNumber = intval($lastAccount->account_number) + 1;
+            }
+
             for ($i = $existingCount + 1; $i <= 20; $i++) {
                 Account::create([
                     'email' => "student{$i}@example.com",
@@ -31,7 +39,8 @@ class MinigameSeeder extends Seeder
                     'first_name' => "Student{$i}",
                     'last_name' => "Last{$i}",
                     'user_role' => 'student',
-                    'status' => 'active'
+                    'status' => 'active',
+                    'account_number' => (string)$nextAccountNumber++
                 ]);
             }
 

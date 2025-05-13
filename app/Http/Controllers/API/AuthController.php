@@ -237,7 +237,10 @@ class AuthController extends Controller
             $user->status = $request->status;
             $user->save();
 
-            return response()->json(['message' => 'User status updated successfully.'], 200);
+            return response()->json([
+                'message' => 'User status updated successfully.',
+                'account' => $user,
+            ], 200);
 
         } catch (Exception $e) {
             return response()->json([
@@ -262,6 +265,14 @@ class AuthController extends Controller
 
             if ($validator) return $validator;
 
+            // Generate next account number
+            $lastAccount = Account::orderBy('id', 'desc')->first();
+            $nextAccountNumber = 2000001; // Default starting number
+
+            if ($lastAccount && $lastAccount->account_number) {
+                $nextAccountNumber = intval($lastAccount->account_number) + 1;
+            }
+
             $account = Account::create([
                 'email' => $request->email,
                 'password' => Hash::make($request->password),
@@ -270,12 +281,14 @@ class AuthController extends Controller
                 'last_name' => $request->last_name,
                 'user_role' => $request->user_role,
                 'status' => $request->status,
-                'teacher_id' => $request->teacher_id ?? null
+                'teacher_id' => $request->teacher_id ?? null,
+                'account_number' => (string)$nextAccountNumber
             ]);
 
             return response()->json([
                 'message' => 'Account created successfully',
-                'account_id' => $account->id
+                'account_id' => $account->id,
+                'account' => $account
             ], 201);
 
         } catch (Exception $e) {
@@ -301,7 +314,8 @@ class AuthController extends Controller
                 $query->where(function ($q) use ($search) {
                     $q->where('first_name', 'like', "%$search%")
                       ->orWhere('middle_name', 'like', "%$search%")
-                      ->orWhere('last_name', 'like', "%$search%");
+                      ->orWhere('last_name', 'like', "%$search%")
+                      ->orWhere('account_number', 'like', "%$search%");
                 });
             }
 
@@ -364,7 +378,10 @@ class AuthController extends Controller
             $user->deleted_at = now();
             $user->save();
 
-            return response()->json(['message' => 'Account deactivated successfully.'], 200);
+            return response()->json([
+                'message' => 'Account deactivated successfully.',
+                'account' => $user,
+            ], 200);
 
         } catch (Exception $e) {
             return response()->json([
@@ -390,7 +407,10 @@ class AuthController extends Controller
             $user->deleted_at = null;
             $user->save();
 
-            return response()->json(['message' => 'Account restored successfully.'], 200);
+            return response()->json([
+                'message' => 'Account restored successfully.',
+                'account' => $user,
+            ], 200);
 
         } catch (Exception $e) {
             return response()->json([

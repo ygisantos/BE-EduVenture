@@ -22,6 +22,7 @@ return new class extends Migration
                   ->onDelete('cascade')
                   ->onUpdate('cascade');
 
+            $table->string('account_number', 7)->unique();
             $table->string('email')->unique();
             $table->string('password');
             $table->string('first_name');

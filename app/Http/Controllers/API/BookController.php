@@ -60,7 +60,10 @@ class BookController extends Controller
 
         $book->update(['deleted_at' => now()]);
 
-        return response()->json(['message' => 'Book has been successfully marked as deleted']);
+        return response()->json([
+            'message' => 'Book has been successfully marked as deleted',
+            'book' => $book
+        ]);
     }
 
     public function show($id): JsonResponse
@@ -166,6 +169,9 @@ class BookController extends Controller
         $content = BookContent::findOrFail($contentId);
         $content->delete();
 
-        return response()->json(['message' => 'Book content has been successfully deleted']);
+        return response()->json([
+            'message' => 'Book content has been successfully deleted',
+            'content' => $content
+        ]);
     }
 }

@@ -19,7 +19,8 @@ class Account extends Authenticatable
         'teacher_id',
         'user_role',
         'status',
-        'deleted_at'
+        'deleted_at',
+        'account_number'
     ];
     protected $hidden = [
         'password'
