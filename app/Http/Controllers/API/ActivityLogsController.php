@@ -53,7 +53,7 @@ class ActivityLogsController extends Controller
             $startDate = $request->query('start_date');
             $endDate = $request->query('end_date');
             $search = $request->query('search');
-            $perPage = $request->query('per_page', 15);
+            $perPage = $request->query('per_page', 50);
 
             if ($startDate) {
                 $query->whereDate('activity_logs.created_at', '>=', $startDate);
