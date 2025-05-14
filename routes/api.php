@@ -55,6 +55,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/get/{id}', [MinigameController::class, 'show']);
         Route::put('/update/{id}', [MinigameController::class, 'update']);
         Route::put('/delete/{id}', [MinigameController::class, 'destroy']);
+        Route::post('/copy/{id}', [MinigameController::class, 'copy']);
 
         // Minigame Content Routes
         Route::post('/contents/create/{minigameId}', [MinigameController::class, 'storeContent']);
