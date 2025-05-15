@@ -24,20 +24,18 @@ class DashboardController extends Controller
         // Optional date range filter
         $startDate = $request->input('start_date');
         $endDate = $request->input('end_date');
+        $accountId = $request->input('account_id');
 
         // Get counts of each user type
-        $userCounts = $this->getUserTypeCounts($startDate, $endDate);
+        $userCounts = $this->getUserTypeCounts($accountId, $startDate, $endDate);
 
         // Get book counts (with optional account filter)
-        $accountId = $request->input('account_id');
         $bookCounts = $this->getBookCounts($accountId, $startDate, $endDate);
 
         // Get minigame counts (with optional account filter)
         $minigameCounts = $this->getMinigameCounts($accountId, $startDate, $endDate);
 
-        // Get average percentage score from minigame histories (optional teacher filter)
-        $teacherId = $request->input('teacher_id');
-        $averageScore = $this->getAverageMinigameScore($teacherId, $startDate, $endDate);
+        $averageScore = $this->getAverageMinigameScore($accountId, $startDate, $endDate);
 
         return response()->json([
             'user_counts' => $userCounts,
@@ -54,30 +52,41 @@ class DashboardController extends Controller
      * @param string|null $endDate
      * @return array
      */
-    private function getUserTypeCounts($startDate = null, $endDate = null)
+    private function getUserTypeCounts($accountId = null, $startDate = null, $endDate = null)
     {
-        $query = Account::query();
+        // Create a base query with date filter
+        $baseQuery = function() use ($accountId, $startDate, $endDate) {
+            $query = Account::query();
+            $query->whereNull('deleted_at');
+            if ($startDate && $endDate) {
+                $query->whereBetween('updated_at', [$startDate, $endDate]);
+            }
 
-        // Apply date filter if provided
-        if ($startDate && $endDate) {
-            $query->whereBetween('updated_at', [$startDate, $endDate]);
-        }
+            if($accountId) $query->where('teacher_id', $accountId);
+            return $query;
+        };
 
-        $totalUsers = $query->count();
-        $activeUsers = $query->where('status', 'active')->count();
-        $inactiveUsers = $query->where('status', 'inactive')->count();
+        // Total users count
+        $totalUsers = $baseQuery()->count();
 
-        $adminCount = $query->where('user_role', 'admin')->count();
-        $teacherCount = $query->where('user_role', 'teacher')->count();
-        $studentCount = $query->where('user_role', 'student')->count();
+        // Active and inactive counts
+        $activeUsers = $baseQuery()->where('status', 'active')->count();
+        $inactiveUsers = $baseQuery()->where('status', 'inactive')->count();
 
-        $activeAdminCount = $query->where('user_role', 'admin')->where('status', 'active')->count();
-        $activeTeacherCount = $query->where('user_role', 'teacher')->where('status', 'active')->count();
-        $activeStudentCount = $query->where('user_role', 'student')->where('status', 'active')->count();
+        // Users by role
+        $adminCount = $baseQuery()->where('user_role', 'admin')->count();
+        $teacherCount = $baseQuery()->where('user_role', 'teacher')->count();
+        $studentCount = $baseQuery()->where('user_role', 'student')->count();
 
-        $inactiveAdminCount = $query->where('user_role', 'admin')->where('status', 'inactive')->count();
-        $inactiveTeacherCount = $query->where('user_role', 'teacher')->where('status', 'inactive')->count();
-        $inactiveStudentCount = $query->where('user_role', 'student')->where('status', 'inactive')->count();
+        // Active users by role
+        $activeAdminCount = $baseQuery()->where('user_role', 'admin')->where('status', 'active')->count();
+        $activeTeacherCount = $baseQuery()->where('user_role', 'teacher')->where('status', 'active')->count();
+        $activeStudentCount = $baseQuery()->where('user_role', 'student')->where('status', 'active')->count();
+
+        // Inactive users by role
+        $inactiveAdminCount = $baseQuery()->where('user_role', 'admin')->where('status', 'inactive')->count();
+        $inactiveTeacherCount = $baseQuery()->where('user_role', 'teacher')->where('status', 'inactive')->count();
+        $inactiveStudentCount = $baseQuery()->where('user_role', 'student')->where('status', 'inactive')->count();
 
         return [
             'total' => $totalUsers,
@@ -113,24 +122,29 @@ class DashboardController extends Controller
      */
     private function getBookCounts($accountId = null, $startDate = null, $endDate = null)
     {
-        $query = Book::query();
+        // Create a base query with filters
+        $baseQuery = function() use ($accountId, $startDate, $endDate) {
+            $query = Book::query();
 
-        // Filter by account if provided
-        if ($accountId) {
-            $query->where('account_id', $accountId);
-        }
+            // Filter by account if provided
+            if ($accountId) {
+                $query->where('account_id', $accountId);
+            }
 
-        // Apply date filter if provided
-        if ($startDate && $endDate) {
-            $query->whereBetween('updated_at', [$startDate, $endDate]);
-        }
+            // Apply date filter if provided
+            if ($startDate && $endDate) {
+                $query->whereBetween('updated_at', [$startDate, $endDate]);
+            }
 
-        // Exclude soft deleted books
-        $query->whereNull('deleted_at');
+            // Exclude soft deleted books
+            $query->whereNull('deleted_at');
 
-        $totalBooks = $query->count();
-        $activeBooks = $query->where('status', 'active')->count();
-        $inactiveBooks = $query->where('status', 'inactive')->count();
+            return $query;
+        };
+
+        $totalBooks = $baseQuery()->count();
+        $activeBooks = $baseQuery()->where('status', 'active')->count();
+        $inactiveBooks = $baseQuery()->where('status', 'inactive')->count();
 
         return [
             'total' => $totalBooks,
@@ -149,25 +163,31 @@ class DashboardController extends Controller
      */
     private function getMinigameCounts($accountId = null, $startDate = null, $endDate = null)
     {
-        $query = Minigame::query();
         $now = Carbon::now();
 
-        // Filter by account if provided
-        if ($accountId) {
-            $query->where('account_id', $accountId);
-        }
+        // Create a base query with filters
+        $baseQuery = function() use ($accountId, $startDate, $endDate) {
+            $query = Minigame::query();
 
-        // Apply date filter if provided
-        if ($startDate && $endDate) {
-            $query->whereBetween('updated_at', [$startDate, $endDate]);
-        }
+            // Filter by account if provided
+            if ($accountId) {
+                $query->where('account_id', $accountId);
+            }
 
-        // Exclude soft deleted minigames
-        $query->whereNull('deleted_at');
+            // Apply date filter if provided
+            if ($startDate && $endDate) {
+                $query->whereBetween('updated_at', [$startDate, $endDate]);
+            }
 
-        $totalMinigames = $query->count();
-        $completedMinigames = (clone $query)->where('starts_at', '<', $now)->count();
-        $upcomingMinigames = (clone $query)->where('starts_at', '>=', $now)->count();
+            // Exclude soft deleted minigames
+            $query->whereNull('deleted_at');
+
+            return $query;
+        };
+
+        $totalMinigames = $baseQuery()->count();
+        $completedMinigames = $baseQuery()->where('starts_at', '<', $now)->count();
+        $upcomingMinigames = $baseQuery()->where('starts_at', '>=', $now)->count();
 
         return [
             'total' => $totalMinigames,
