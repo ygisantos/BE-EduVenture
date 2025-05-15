@@ -31,7 +31,7 @@ Route::get('accounts/generate-account-numbers', [AccountNumberController::class,
 Route::middleware('auth:sanctum')->group(function () {
     // Dashboard Routes
     Route::prefix('dashboard')->group(function () {
-        Route::get('/admin', [DashboardController::class, 'adminDashboard']);
+        Route::get('/get', [DashboardController::class, 'adminDashboard']);
     });
 
     // Book Routes
