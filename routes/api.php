@@ -5,6 +5,7 @@ use App\Http\Controllers\API\BookController;
 use App\Http\Controllers\API\ActivityLogsController;
 use App\Http\Controllers\API\MinigameController;
 use App\Http\Controllers\API\AccountNumberController;
+use App\Http\Controllers\API\DashboardController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -28,6 +29,11 @@ Route::get('accounts/get', [AuthController::class, 'getAllAccounts'])->middlewar
 Route::get('accounts/generate-account-numbers', [AccountNumberController::class, 'generateAccountNumbersForExistingAccounts'])->middleware('auth:sanctum');
 
 Route::middleware('auth:sanctum')->group(function () {
+    // Dashboard Routes
+    Route::prefix('dashboard')->group(function () {
+        Route::get('/admin', [DashboardController::class, 'adminDashboard']);
+    });
+
     // Book Routes
     Route::prefix('books')->group(function () {
         Route::get('/get', [BookController::class, 'index']);
