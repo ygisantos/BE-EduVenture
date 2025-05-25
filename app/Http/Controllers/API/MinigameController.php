@@ -287,6 +287,13 @@ class MinigameController extends Controller
 
             $history = $query->get();
 
+            // Add total possible points to each history entry
+            foreach ($history as $entry) {
+                $totalPossiblePoints = MinigameContent::where('minigame_id', $entry->minigame_id)
+                                     ->sum('points');
+                $entry->total_possible_points = $totalPossiblePoints;
+            }
+
             return response()->json($history);
         } catch (\Exception $e) {
             return response()->json(['message' => 'Error retrieving history', 'error' => $e->getMessage()], 500);
