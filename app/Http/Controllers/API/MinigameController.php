@@ -235,6 +235,7 @@ class MinigameController extends Controller
     {
         try {
             $contents = MinigameContent::where('minigame_id', $minigameId)
+                                     ->orderBy('page_number')
                                      ->get();
 
             return response()->json($contents);

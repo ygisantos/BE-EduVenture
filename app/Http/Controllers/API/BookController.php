@@ -68,7 +68,9 @@ class BookController extends Controller
 
     public function show($id): JsonResponse
     {
-        $book = Book::with('contents')
+        $book = Book::with(['contents' => function($query) {
+                    $query->orderBy('page_number', 'asc');
+                }])
                 ->with('account')
                 ->findOrFail($id);
         return response()->json(['data' => $book]);
