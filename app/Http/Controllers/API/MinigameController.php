@@ -84,7 +84,7 @@ class MinigameController extends Controller
         $rules = [
             'status' => 'nullable|in:upcoming,ongoing,completed',
             'search' => 'nullable|string',
-            'per_page' => 'nullable|integer|min:1|max:100',
+            'per_page' => 'nullable|integer|min:1|max:999',
             'account_id' => 'nullable|exists:accounts,id',
         ];
 
@@ -161,8 +161,8 @@ class MinigameController extends Controller
         if ($validationError) return $validationError;
 
         try {
-            $minigame = MinigameContent::where('id', $minigameId)
-                               ->firstOrFail();
+            // Ensure the minigame exists
+            $minigame = Minigame::where('id', $minigameId)->firstOrFail();
 
             $contents = collect($request->contents)->map(function ($content) use ($minigameId) {
                 return array_merge($content, [
@@ -291,13 +291,13 @@ class MinigameController extends Controller
             return response()->json(['message' => 'Error retrieving history', 'error' => $e->getMessage()], 500);
         }
     }
-    
+
     public function copy($id)
     {
         try {
             // Find the original minigame
             $originalMinigame = Minigame::with('contents')->findOrFail($id);
-            
+
             // Create a copy of the minigame with a new title and timestamp
             $newMinigame = Minigame::create([
                 'account_id' => auth()->id(),
@@ -307,7 +307,7 @@ class MinigameController extends Controller
                 'starts_at' => now()->addDay(), // Set to tomorrow by default
                 'deleted_at' => null
             ]);
-            
+
             // Copy all contents of the minigame
             $contentsToInsert = [];
             foreach ($originalMinigame->contents as $content) {
@@ -326,21 +326,21 @@ class MinigameController extends Controller
                     'updated_at' => now()
                 ];
             }
-            
+
             // Insert all contents at once if there are any
             if (!empty($contentsToInsert)) {
                 MinigameContent::insert($contentsToInsert);
             }
-            
+
             // Return the new minigame with its contents
             $newMinigameWithContents = Minigame::with('contents')
                                      ->findOrFail($newMinigame->id);
-                                     
+
             return response()->json([
-                'message' => 'Minigame copied successfully', 
+                'message' => 'Minigame copied successfully',
                 'data' => $newMinigameWithContents
             ], 201);
-            
+
         } catch (\Exception $e) {
             return response()->json(['message' => 'Error copying minigame', 'error' => $e->getMessage()], 500);
         }
