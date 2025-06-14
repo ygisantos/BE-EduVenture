@@ -8,6 +8,7 @@ use App\Models\Book;
 use App\Models\BookContent;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Http\JsonResponse;
 
 class BookController extends Controller
@@ -15,19 +16,33 @@ class BookController extends Controller
     // Book Functions
     public function store(Request $request): JsonResponse
     {
-        $validationError = ValidationHelper::validate($request, [
+        $validationRules = [
             'title' => 'required|string',
             'description' => 'required|string',
-            'status' => 'required'
-        ]);
+            'status' => 'required',
+            'book_type' => 'required|in:manual,pdf',
+            'pdf_file' => 'required_if:book_type,pdf|file|mimes:pdf'
+        ];
+
+        $validationError = ValidationHelper::validate($request, $validationRules);
 
         if ($validationError) return $validationError;
+
+        $filePath = null;
+        if ($request->book_type === 'pdf' && $request->hasFile('pdf_file')) {
+            $file = $request->file('pdf_file');
+            $fileName = time() . '_' . pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME) . '.pdf';
+            $filePath = $file->storeAs('books', $fileName, 'public');
+            $filePath = 'storage/' . $filePath;
+        }
 
         $book = Book::create([
             'title' => $request->title,
             'description' => $request->description,
             'account_id' => Auth::id(),
-            'status' => $request->status
+            'status' => $request->status,
+            'book_type' => $request->book_type,
+            'file_path' => $filePath
         ]);
 
         return response()->json(['message' => 'Book has been successfully created', 'data' => $book], 201);
@@ -38,15 +53,40 @@ class BookController extends Controller
         try {
             $book = Book::findOrFail($id);
 
-            $validationError = ValidationHelper::validate($request, [
+            $validationRules = [
                 'title' => 'required|string',
                 'description' => 'required|string',
                 'status' => 'required|in:active,inactive',
-            ]);
+                'book_type' => 'in:manual,pdf',
+                'pdf_file' => 'sometimes|required_if:book_type,pdf|file|mimes:pdf'
+            ];
+
+            $validationError = ValidationHelper::validate($request, $validationRules);
 
             if ($validationError) return $validationError;
 
-            $book->update($request->all());
+            $data = $request->all();
+
+            // Handle PDF file update
+            if ($request->book_type === 'pdf' && $request->hasFile('pdf_file')) {
+                // Delete old file if exists
+                if ($book->file_path) {
+                    Storage::disk('public')->delete(str_replace('storage/', '', $book->file_path));
+                }
+
+                $file = $request->file('pdf_file');
+                $fileName = time() . '_' . pathinfo($file->getClientOriginalName(), PATHINFO_FILENAME) . '.pdf';
+                $filePath = $file->storeAs('books', $fileName, 'public');
+                $data['file_path'] = 'storage/' . $filePath;
+            } else if ($request->book_type === 'manual') {
+                // If switching to manual type, remove file
+                if ($book->file_path) {
+                    Storage::disk('public')->delete(str_replace('storage/', '', $book->file_path));
+                }
+                $data['file_path'] = null;
+            }
+
+            $book->update($data);
 
             return response()->json(['message' => 'Book has been successfully updated', 'data' => $book]);
         } catch (\Exception $e) {

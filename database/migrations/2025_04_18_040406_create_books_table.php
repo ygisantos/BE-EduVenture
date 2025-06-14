@@ -16,6 +16,8 @@ return new class extends Migration
             $table->string('title');
             $table->string('description');
             $table->string('status')->default('active'); // active, inactive
+            $table->string('book_type')->nullable()->default(null); // manual or pdf
+            $table->string('file_path')->nullable()->default(null); // path to stored pdf file
 
             $table->unsignedBigInteger('account_id'); // Who made it
             $table->foreign('account_id')

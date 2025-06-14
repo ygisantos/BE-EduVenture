@@ -13,7 +13,9 @@ class Book extends Model
         'description',
         'status',
         'account_id',
-        'deleted_at'
+        'deleted_at',
+        'book_type',
+        'file_path'
     ];
 
     public function account(): BelongsTo
