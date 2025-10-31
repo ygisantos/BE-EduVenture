@@ -22,3 +22,4 @@ yarn-error.log
 /.zed
 *.pdf
 *.zip
+*.env
